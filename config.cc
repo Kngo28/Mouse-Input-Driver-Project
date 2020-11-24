@@ -24,6 +24,7 @@ struct SDT {
 } __attribute__ ((packed));
 
 
+
 struct GenericAddressStructure
 {
   uint8_t AddressSpace;
@@ -212,36 +213,23 @@ void configInit(Config* config) {
     }
 
     MADT* madt = (MADT*) findSDT(rsdp,"APIC");
-    FADT* fadt = (FADT*) findSDT(rsdp,"FACP");
-
-    // SDT* temp = &fadt->h;
-    // SDT* MadtTemp = &madt->sdt;
-    // Debug::printf("header: %s\n", temp->Signature);
-    // Debug::printf("size: %d\n", temp->Length);
-    // Debug::printf("MADT header: %s\n", MadtTemp->Signature);
-
-    Debug::printf("flag: %x\n", fadt->BootArchitectureFlags);
-    Debug::printf("flag: %x\n", fadt->Reserved2);
-    if(fadt->BootArchitectureFlags == 0) {
-        //there's a PS2
-        Debug::panic("NO PS2 CONTROLLER!");
-    }
-
+   
     //Debug::printf("found madt %x\n",(uint32_t) madt);
 
     config->localAPIC = madt->localAddress;
     config->madtFlags = madt->flags;
 
-    int32_t bytesForEntries = madt->sdt.Length - sizeof(MADT);
+    int32_t bytesForEntries = (madt->sdt.Length - sizeof(MADT));// / 4;
     //Debug::printf("MADT bytes for entries %x\n",bytesForEntries);
 
     MADT_ENTRY* entryPtr = (MADT_ENTRY*)(madt + 1);
 
     config->nOtherProcs = 0; // Base processor not in tables
 
+    // Debug::printf("????: %d\n",bytesForEntries);
     while (bytesForEntries > 0) {
         uint32_t len = entryPtr->len;
-        //Debug::printf("entry type %x\n",entryPtr->type);
+        Debug::printf("entry type %x\n",entryPtr->type);
         //Debug::printf("entry length %x\n",len);
         entryPtr = (MADT_ENTRY*) (((uintptr_t) entryPtr) + len);
         bytesForEntries -= len;
@@ -258,10 +246,55 @@ void configInit(Config* config) {
         }
         else if (entryPtr->type == 1) {
             IOAPIC_ENTRY *apic = (IOAPIC_ENTRY*) entryPtr;
-            // Debug::printf("ID: %d, address: 0x%x, base: %d\n", apic->apicId, apic->address, apic->base);
+            Debug::printf("ID: %d, address: 0x%x, base: %d\n", apic->apicId, apic->address, apic->base);
             config->ioAPIC = apic->address;
         }
     }
+    // Debug::panic("!!!!!!!!!!!");
+    FADT* fadt = (FADT*) findSDT(rsdp,"FACP");
+
+    // SDT* temp = &fadt->h;
+    // SDT* MadtTemp = &madt->sdt;
+    // Debug::printf("header: %s\n", temp->Signature);
+    // Debug::printf("size: %d\n", temp->Length);
+    // Debug::printf("MADT header: %s\n", MadtTemp->Signature);
+
+    Debug::printf("BAF flag: %x\n", fadt->BootArchitectureFlags);
+    Debug::printf("other flag: %x\n", fadt->Reserved2);
+    if(fadt->BootArchitectureFlags == 0) {
+        //there's no PS2
+        // Debug::panic("NO PS2 CONTROLLER!");
+    }
+
+    //step 3:
+    outb(0x64, 0xAD);
+    outb(0x64, 0xA7);
+    //step 4:
+    inb(0x60);
+    //might have to read (inb) w/o testing bit 0...
+    //step 5:
+    outb(0x64, 0x20);
+    outb(0x64, 0x6034); //next byte (34) is being sent by command (0x60)
+    //step 6:
+    outb(0x64, 0xAA);
+    int test = inb(0x60);
+    if(test != 0x55) //might need do conversions.....
+    {
+        //good
+        Debug::panic("bad\n");
+    }
+    //step 7: skip
+    //step 8:
+    outb(0x64, 0xAB);
+    int interface_test = inb(0x60);
+    if(interface_test != 0) {
+        //we good..
+        Debug::panic("bad interface test\n");
+    }
+    //step 9:
+    outb(0x64, 0xAE);
+    outb(0x64, 0x6001);
+    //step 10: RESET...
 
     config->totalProcs = config->nOtherProcs + 1;
 }
