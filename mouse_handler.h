@@ -1,7 +1,15 @@
 #ifndef _MOUSE_HANDLER_H_
 #define _MOUSE_HANDLER_H_
 
+#include "stdint.h"
 
+class MOUSE_HANDLER {
+    public:
+    static const uint32_t IRQ = 12;
+    static const uint32_t VECTOR = 60;
+};
+
+extern "C" void mouse_init();
 
 extern "C" int detect_ps2_type(void);
 //poll bit 0 (val == 1) of 0x64 to see if data in port 0x60 is mouse data

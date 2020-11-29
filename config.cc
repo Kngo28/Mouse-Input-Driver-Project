@@ -1,6 +1,7 @@
 #include "stdint.h"
 #include "debug.h"
 #include "config.h"
+#include "mouse_handler.h"
 
 struct MemInfo {
     uint16_t ax;
@@ -23,8 +24,9 @@ struct SDT {
   uint32_t CreatorRevision;
 } __attribute__ ((packed));
 
+typedef struct SDT SDT;
 
-
+// borrowed from osdev
 struct GenericAddressStructure
 {
   uint8_t AddressSpace;
@@ -34,6 +36,7 @@ struct GenericAddressStructure
   uint64_t Address;
 };
 
+// borrowed from osdev
 struct FADT
 {
     struct SDT h;
@@ -102,8 +105,6 @@ struct FADT
     GenericAddressStructure X_GPE1Block;
 };
 
-typedef struct SDT SDT;
-
 struct MADT {
     SDT sdt;
     uint32_t localAddress;
@@ -148,6 +149,30 @@ struct RSD {
 } __attribute__ ((packed));
 
 typedef struct RSD RSD;
+
+// borrowed from osdev
+union RedirectionEntry {
+    struct
+    {
+        uint64_t vector       : 8;
+        uint64_t delvMode     : 3;
+        uint64_t destMode     : 1;
+        uint64_t delvStatus   : 1;
+        uint64_t pinPolarity  : 1;
+        uint64_t remoteIRR    : 1;
+        uint64_t triggerMode  : 1;
+        uint64_t mask         : 1;
+        uint64_t reserved     : 39;
+        uint64_t destination  : 8;
+    };
+    struct
+    {
+        uint32_t lowerDword;
+        uint32_t upperDword;
+    };
+};
+
+typedef union RedirectionEntry RedirectionEntry;
 
 static int iseq(const char* a, const char* b, uint32_t len) {
     for (uint32_t i = 0; i<len; i++) {
@@ -196,6 +221,18 @@ static uint32_t memAbove1M() {
 
 }
 
+//borrowed from osdev
+uint32_t cpuReadIoApic(void *ioapicaddr, uint32_t reg) {
+   uint32_t volatile *ioapic = (uint32_t volatile *)ioapicaddr;
+   ioapic[0] = (reg & 0xff);
+   return ioapic[4];
+}
+void cpuWriteIoApic(void *ioapicaddr, uint32_t reg, uint32_t value) {
+   uint32_t volatile *ioapic = (uint32_t volatile *)ioapicaddr;
+   ioapic[0] = (reg & 0xff);
+   ioapic[4] = value;
+}
+
 Config kConfig;
 
 void configInit(Config* config) {
@@ -213,28 +250,23 @@ void configInit(Config* config) {
     }
 
     MADT* madt = (MADT*) findSDT(rsdp,"APIC");
-   
-    //Debug::printf("found madt %x\n",(uint32_t) madt);
 
     config->localAPIC = madt->localAddress;
     config->madtFlags = madt->flags;
 
-    int32_t bytesForEntries = (madt->sdt.Length - sizeof(MADT));// / 4;
-    //Debug::printf("MADT bytes for entries %x\n",bytesForEntries);
+    int32_t bytesForEntries = madt->sdt.Length - sizeof(MADT);
 
     MADT_ENTRY* entryPtr = (MADT_ENTRY*)(madt + 1);
 
     config->nOtherProcs = 0; // Base processor not in tables
 
-    // Debug::printf("????: %d\n",bytesForEntries);
     while (bytesForEntries > 0) {
         uint32_t len = entryPtr->len;
-        Debug::printf("entry type %x\n",entryPtr->type);
-        //Debug::printf("entry length %x\n",len);
         entryPtr = (MADT_ENTRY*) (((uintptr_t) entryPtr) + len);
         bytesForEntries -= len;
 
         if (entryPtr->type == 0) {
+            //Debug::printf("found localAPIC device\n");
             APIC_ENTRY *apic = (APIC_ENTRY*) entryPtr;
             if (apic->processorId == 0) {
                 continue;
@@ -245,12 +277,29 @@ void configInit(Config* config) {
             info->flags = apic->flags;
         }
         else if (entryPtr->type == 1) {
+            //Debug::printf("found ioAPIC device\n");
             IOAPIC_ENTRY *apic = (IOAPIC_ENTRY*) entryPtr;
-            Debug::printf("ID: %d, address: 0x%x, base: %d\n", apic->apicId, apic->address, apic->base);
+
+            // get redirection entry
+            uint32_t red_entry = 0x10 + 2*MOUSE_HANDLER::IRQ;
+            uint64_t reg = cpuReadIoApic((uint32_t*)apic->address, red_entry + 1);
+            reg = (reg << 32) | cpuReadIoApic((uint32_t*)apic->address, red_entry);
+            RedirectionEntry* RED = (RedirectionEntry*) &reg;
+
+            // change redirection entry
+            RED->vector = MOUSE_HANDLER::VECTOR;  // interrupt vector
+            RED->destination = 1;                 // localAPIC id
+            RED->mask = 0;                        // enable this IRQ
+
+            // set redirection entry
+            cpuWriteIoApic((uint32_t*)apic->address, red_entry, RED->lowerDword);
+            cpuWriteIoApic((uint32_t*)apic->address, red_entry + 1, RED->upperDword);
+
+            //Debug::printf("ID: %d, address: 0x%x, base: %d\n", apic->apicId, apic->address, apic->base);
             config->ioAPIC = apic->address;
         }
     }
-    // Debug::panic("!!!!!!!!!!!");
+    //Debug::panic("|||||||||||\n");
     FADT* fadt = (FADT*) findSDT(rsdp,"FACP");
 
     // SDT* temp = &fadt->h;
@@ -274,14 +323,20 @@ void configInit(Config* config) {
     //might have to read (inb) w/o testing bit 0...
     //step 5:
     outb(0x64, 0x20);
+    int status = inb(0x60);
+    Debug::printf("status: 0x%x\n", status);
+    status = (status & 0xFFDF) | 2;
+    Debug::printf("status: 0x%x\n", status);
     outb(0x64, 0x6034); //next byte (34) is being sent by command (0x60)
+    outb(0x60, status);
     //step 6:
     outb(0x64, 0xAA);
+    inb(0x60); // flush
     int test = inb(0x60);
     if(test != 0x55) //might need do conversions.....
     {
         //good
-        Debug::panic("bad\n");
+        Debug::panic("bad:  %d\n", test);
     }
     //step 7: skip
     //step 8:
