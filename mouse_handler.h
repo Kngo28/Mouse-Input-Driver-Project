@@ -43,7 +43,6 @@ int EOI_reg = lapic + 0x0B0 (this is the offset of lapic registers to get EOI...
 sent EOI to interrupt ctrller
 outb(interrupt ctrller, EOI);
 //return bytes from interrupt handler...
-
 */
 
 #endif
