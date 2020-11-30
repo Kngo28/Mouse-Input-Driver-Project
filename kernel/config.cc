@@ -318,17 +318,21 @@ void configInit(Config* config) {
     //step 3:
     outb(0x64, 0xAD);
     outb(0x64, 0xA7);
+
     //step 4:
     inb(0x60);
     //might have to read (inb) w/o testing bit 0...
+
     //step 5:
     outb(0x64, 0x20);
-    int status = inb(0x60);
-    Debug::printf("status: 0x%x\n", status);
-    status = (status & 0xFFDF) | 2;
-    Debug::printf("status: 0x%x\n", status);
-    outb(0x64, 0x6034); //next byte (34) is being sent by command (0x60)
-    outb(0x60, status);
+    int status = inb(0x60);  // bit 5 is set (therefore it is a duel channel PS2 controller)       0x71:  0111 0001
+    Debug::printf("status before: 0x%x\n", status);                                      //       
+    status = (status & 0xDF) | 2;                                                              // 0x53:  0101 0011
+    //status = (status & 0xBC);                                                                    // 0x30:  0011 0000
+    Debug::printf("status after: 0x%x\n", status);
+    outb(0x64, 0x6000 | status); //next byte (34) is being sent by command (0x60)
+    //outb(0x60, status);
+
     //step 6:
     outb(0x64, 0xAA);
     inb(0x60); // flush
@@ -338,17 +342,38 @@ void configInit(Config* config) {
         //good
         Debug::panic("bad:  %d\n", test);
     }
+
     //step 7: skip
+    outb(0x64, 0xa8);
+    status = inb(0x60);
+    Debug::printf("status2: 0x%x\n", status);
+
     //step 8:
-    outb(0x64, 0xAB);
+    outb(0x64, 0xAB);  // test port 1
     int interface_test = inb(0x60);
     if(interface_test != 0) {
         //we good..
         Debug::panic("bad interface test\n");
     }
+    outb(0x64, 0xA9);  // test port 2
+    interface_test = inb(0x60);
+    if(interface_test != 0) {
+        //we good..
+        Debug::panic("bad interface test\n");
+    }
+
     //step 9:
     outb(0x64, 0xAE);
-    outb(0x64, 0x6001);
+    status = inb(0x60);
+    status = status | 1;  // set bit 0 to enable interrupts on PS2 1
+    outb(0x64, 0x6000 | status);
+    //Debug::printf("status3: %d\n", status);
+
+    outb(0x64, 0xA8);
+    status = inb(0x60);
+    status = status | 2;  // set bit 1 to enable interrupts on PS2 2
+    outb(0x64, 0x6000 | status);
+
     //step 10: RESET...
 
     config->totalProcs = config->nOtherProcs + 1;
