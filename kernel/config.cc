@@ -337,10 +337,10 @@ void configInit(Config* config) {
     outb(0x64, 0xAA);
     inb(0x60); // flush
     int test = inb(0x60);
-    if(test != 0x55) //might need do conversions.....
-    {
-        //good
-        Debug::panic("bad:  %d\n", test);
+    if(test == 0x55) {
+        Debug::printf("Controller Self Test PASSED with 0x%x\n", test);
+    } else {
+       Debug::printf("Controller Self Test FAILED with 0x%x\n", test);
     }
 
     //step 7: skip
@@ -351,14 +351,16 @@ void configInit(Config* config) {
     //step 8:
     outb(0x64, 0xAB);  // test port 1
     int interface_test = inb(0x60);
-    if(interface_test != 0) {
-        //we good..
+    if(interface_test == 0) {
+        Debug::panic("pass interface test\n");
+    } else {
         Debug::panic("bad interface test\n");
     }
     outb(0x64, 0xA9);  // test port 2
     interface_test = inb(0x60);
-    if(interface_test != 0) {
-        //we good..
+    if(interface_test == 0) {
+        Debug::panic("pass interface test\n");
+    } else {
         Debug::panic("bad interface test\n");
     }
 
