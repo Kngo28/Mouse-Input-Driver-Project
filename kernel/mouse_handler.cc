@@ -25,52 +25,36 @@ extern "C" int mouseHandler(uint32_t eax, uint32_t *frame) {
     switch(eax) {
         case 0: // void middle_click_on(void)
             current_mouse_state->enable_bm();
-<<<<<<< HEAD
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
-=======
             outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
->>>>>>> fa038c3900475b36147724d17c987a4b711061a5
             break;
 
         case 1: // void middle_click_off(void)
             current_mouse_state->disable_bm();
-<<<<<<< HEAD
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
-=======
             outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
->>>>>>> fa038c3900475b36147724d17c987a4b711061a5
             break;
 
         case 2: // void right_click_on(void)
             current_mouse_state->enable_br();
-<<<<<<< HEAD
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
-=======
             outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
->>>>>>> fa038c3900475b36147724d17c987a4b711061a5
             break;
 
         case 3: // void right_click_off(void)
             current_mouse_state->disable_br();
-<<<<<<< HEAD
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
-=======
             outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
->>>>>>> fa038c3900475b36147724d17c987a4b711061a5
             break;
 
         case 4: // void left_click_on(void)
             current_mouse_state->disable_br();
-<<<<<<< HEAD
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
-=======
             outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
->>>>>>> fa038c3900475b36147724d17c987a4b711061a5
             break;
 
         case 5: // void left_click_off(void)
             current_mouse_state->disable_bl();
-<<<<<<< HEAD
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
             break;
 
@@ -86,7 +70,6 @@ extern "C" int mouseHandler(uint32_t eax, uint32_t *frame) {
                 current_mouse_state->add_y(ym);
                 outb(0x60, (current_mouse_state->get_packet() & 0x0000CF) | (p->get_packet() & ~0x0000CF) );
             }
-=======
             outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
             break;
 
@@ -97,7 +80,6 @@ extern "C" int mouseHandler(uint32_t eax, uint32_t *frame) {
             current_mouse_state->add_x((int)userEsp[1]);
             current_mouse_state->add_y((int)userEsp[2]);
             outb( (current_mouse_state->get_packet() & 0x0000CF) | (p->get_packet() & ~0x0000CF) , 0x60);
->>>>>>> fa038c3900475b36147724d17c987a4b711061a5
             break;
 
         case 7: // uint32_t show_mouse(void)
@@ -112,12 +94,9 @@ extern "C" int mouseHandler(uint32_t eax, uint32_t *frame) {
 
 void mouse_init() {
     Debug::printf("touched\n");
-<<<<<<< HEAD
     MouseState* current_mouse_state = new MouseState();
     current_mouse_state->reset();
-=======
     //MouseState* current_mouse_state = new MouseState();
->>>>>>> fa038c3900475b36147724d17c987a4b711061a5
     IDT::interrupt(MOUSE_HANDLER::VECTOR, (uint32_t)mouseHandler_);
 }
 
