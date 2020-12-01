@@ -18,7 +18,7 @@ extern "C" int mouseHandler(uint32_t eax, uint32_t *frame) {
     uint32_t *userEsp = (uint32_t*)frame[3];
     // uint32_t userPC = frame[0];
 
-    Debug::printf("*** mouse movement call#%d, userEsp = %x, userPC = %x\n",eax, userEsp, userPC);
+    //Debug::printf("*** mouse movement call#%d, userEsp = %x, userPC = %x\n",eax, userEsp, userPC);
 
     Packet* p = new Packet();
 
@@ -70,16 +70,6 @@ extern "C" int mouseHandler(uint32_t eax, uint32_t *frame) {
                 current_mouse_state->add_y(ym);
                 outb(0x60, (current_mouse_state->get_packet() & 0x0000CF) | (p->get_packet() & ~0x0000CF) );
             }
-            outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
-            break;
-
-        case 6: // void move_mouse(int xm, int ym)
-            p->set_xm((int)userEsp[1]);
-            p->set_ym((int)userEsp[2]);
-
-            current_mouse_state->add_x((int)userEsp[1]);
-            current_mouse_state->add_y((int)userEsp[2]);
-            outb( (current_mouse_state->get_packet() & 0x0000CF) | (p->get_packet() & ~0x0000CF) , 0x60);
             break;
 
         case 7: // uint32_t show_mouse(void)

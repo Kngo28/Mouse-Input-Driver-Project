@@ -352,14 +352,14 @@ void configInit(Config* config) {
     outb(0x64, 0xAB);  // test port 1
     int interface_test = inb(0x60);
     if(interface_test == 0) {
-        Debug::panic("pass interface test\n");
+        Debug::printf("pass interface test\n");
     } else {
         Debug::panic("bad interface test\n");
     }
     outb(0x64, 0xA9);  // test port 2
     interface_test = inb(0x60);
     if(interface_test == 0) {
-        Debug::panic("pass interface test\n");
+        Debug::printf("pass interface test\n");
     } else {
         Debug::panic("bad interface test\n");
     }
