@@ -10,7 +10,7 @@ class MOUSE_HANDLER {
     static const uint32_t VECTOR = 60;
 };
 
-extern MouseState current_mouse_state;
+extern MouseState* current_mouse_state;
 
 extern "C" void mouse_init();
 
