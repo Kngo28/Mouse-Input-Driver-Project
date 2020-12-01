@@ -2,6 +2,7 @@
 #define _MOUSE_HANDLER_H_
 
 #include "stdint.h"
+#include "packet.h"
 
 class MOUSE_HANDLER {
     public:
