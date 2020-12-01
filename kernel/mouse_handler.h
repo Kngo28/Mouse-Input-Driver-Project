@@ -2,6 +2,7 @@
 #define _MOUSE_HANDLER_H_
 
 #include "stdint.h"
+#include "packet.h"
 
 class MOUSE_HANDLER {
     public:
@@ -9,8 +10,9 @@ class MOUSE_HANDLER {
     static const uint32_t VECTOR = 60;
 };
 
-extern "C" void mouse_init();
+extern MouseState current_mouse_state;
 
+extern "C" void mouse_init();
 
 extern "C" int detect_ps2_type(void);
 /*

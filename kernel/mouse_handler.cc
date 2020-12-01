@@ -77,11 +77,3 @@ void mouse_init() {
     //MouseState* current_mouse_state = new MouseState();
     IDT::interrupt(MOUSE_HANDLER::VECTOR, (uint32_t)mouseHandler_);
 }
-
-/*
-int receive_mouse_input(void) {
-    Debug::printf("success!\n");
-    PIC_sendEOI(MOUSE_HANDLER::IRQ);
-    return 0;
-}
-*/
