@@ -54,5 +54,7 @@ extern uint32_t kernelSS;
 
 extern "C" void sysHandler_(void);
 
+extern "C" void mouseHandler_(void);
+
 
 #endif

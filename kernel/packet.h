@@ -26,62 +26,90 @@ public:
         byte3 = 0x00;
     }
 
-    inline void set_yo() {
+    inline void enable_yo() {
         byte0 |= 0x80;
     }
 
-    inline void set_xo() {
+    inline void disable_yo() {
+        byte0 &= ~0x80;
+    }
+
+    inline void enable_xo() {
         byte0 |= 0x40;
     }
+
+    inline void disable_xo() {
+        byte0 &= ~0x40;
+    }
     
-    inline void set_ys() {
+    inline void enable_ys() {
         byte0 |= 0x20;
     }
 
-    inline void set_xs() {
+    inline void disable_ys() {
+        byte0 &= ~0x20;
+    }
+
+    inline void enable_xs() {
         byte0 |= 0x10;
     }
 
-    inline void set_bm() {
+    inline void disable_xs() {
+        byte0 &= ~0x10;
+    }
+
+    inline void enable_bm() {
         byte0 |= 0x04;
     }
 
-    inline void set_br() {
+    inline void disable_bm() {
+        byte0 &= ~0x04;
+    }
+
+    inline void enable_br() {
         byte0 |= 0x02;
     }
 
-    inline void set_bl() {
+    inline void disable_br() {
+        byte0 &= ~0x02;
+    }
+
+    inline void enable_bl() {
         byte0 |= 0x01;
+    }
+
+    inline void disable_bl() {
+        byte0 &= ~0x01;
     }
 
     void set_ym(int ym) {
         if (ym >= MOVE_LIMIT) {
-            set_yo();
+            enable_yo();
             byte2 = MOVE_LIMIT - 1;
         } else if (ym < -MOVE_LIMIT) {
-            set_yo();
-            set_ys();
+            enable_yo();
+            enable_ys();
             byte2 = 0x00;
         } else if (ym >= 0) {
             byte2 = ym;
         } else {
-            set_ys();
+            enable_ys();
             byte2 = ym + 0x100;
         }
     }
 
     void set_xm(int xm) {
         if (xm >= MOVE_LIMIT) {
-            set_xo();
+            enable_xo();
             byte1 = MOVE_LIMIT - 1;
         } else if (xm < -MOVE_LIMIT) {
-            set_xo();
-            set_xs();
+            enable_xo();
+            enable_xs();
             byte1 = 0x00;
         } else if (xm >= 0) {
             byte1 = xm;
         } else {
-            set_xs();
+            enable_xs();
             byte1 = xm + 0x100;
         }
     }
@@ -105,5 +133,17 @@ public:
     }
 
 };
+
+
+class MouseState : public Packet {
+public:
+    inline add_x(int xm) {
+        set_xm(get_xm() + xm);
+    }
+
+    void add_y(int ym) {
+        set_ym(get_ym() + ym);
+    }
+}
 
 #endif

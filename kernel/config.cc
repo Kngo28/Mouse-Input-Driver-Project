@@ -377,6 +377,15 @@ void configInit(Config* config) {
     outb(0x64, 0x6000 | status);
 
     //step 10: RESET...
+    outb(0x64, 0xFF);
+    int acknowledge = inb(0x60);
+    if (acknowledge == 0xFA) {
+        Debug::printf("reset success\n");
+    } else if (acknowledge == 0xFC) {
+        Debug::printf("reset failure\n");
+    } else {
+        Debug::printf("no device present\n");
+    }
 
     config->totalProcs = config->nOtherProcs + 1;
 }
