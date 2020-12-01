@@ -224,15 +224,15 @@ sysHandler_:
         iret
 
 
-    .extern receive_mouse_input
-    .global receive_mouse_input_
-receive_mouse_input_:
-    pusha
-    push %esp
-    call receive_mouse_input
-    pop %esp
-    popa
-    iret
+#    .extern receive_mouse_input
+#    .global receive_mouse_input_
+#receive_mouse_input_:
+#    pusha
+#    push %esp
+#    call receive_mouse_input
+#    pop %esp
+#    popa
+#    iret
 
 
     .global mouseHandler_
