@@ -137,13 +137,13 @@ public:
 
 class MouseState : public Packet {
 public:
-    inline add_x(int xm) {
+    void add_x(int xm) {
         set_xm(get_xm() + xm);
     }
 
     void add_y(int ym) {
         set_ym(get_ym() + ym);
     }
-}
+};
 
 #endif
