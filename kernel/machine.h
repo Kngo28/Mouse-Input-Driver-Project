@@ -18,7 +18,7 @@ extern "C" void invlpg(uint32_t va);
 
 extern "C" void apitHandler_(void);
 //extern "C" void receive_mouse_input_(void);
-extern "C" void mouseHandler_(void);
+//extern "C" void mouseHandler_(void);
 extern "C" void spuriousHandler_(void);
 extern "C" void pageFaultHandler_(void);
 
