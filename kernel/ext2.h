@@ -5,6 +5,12 @@
 #include "shared.h"
 #include "atomic.h"
 
+#define NDIR_BLOCKS  12                // number of direct blocks
+#define IND_BLOCK    NDIR_BLOCKS       // single indirect block
+#define DIND_BLOCK   (IND_BLOCK + 1)   // double indirect block
+#define TIND_BLOCK   (DIND_BLOCK + 1)  // trible indirect block
+#define N_BLOCKS     (TIND_BLOCK + 1)  // total number of blocks
+
 struct SuperBlock {
     uint32_t inodes_count;
     uint32_t blocks_count;
@@ -134,9 +140,9 @@ public:
         return data.size_low;
     }
 
-    // read the given block (panics if the block number is not valid)
-    // remember that block size is defined by the file system not the device
-    void read_block(uint32_t number, char* buffer) override;
+    void read_block(uint32_t number, char* buffer);
+
+    void write_block(uint32_t number, char* buffer);
 
     inline uint16_t get_type() {
         return data.get_type();

@@ -96,8 +96,7 @@ void Ide::read_block(uint32_t sector, char* buffer) {
     }
 }
 
-/*
-void Ide::writeSector(uint32_t sector, const void* buffer) {
+void Ide::write_block(uint32_t sector, char* buffer) {
     LockGuard g{lock};
     const uint32_t* ptr = (const uint32_t*) buffer;
 
@@ -120,7 +119,7 @@ void Ide::writeSector(uint32_t sector, const void* buffer) {
         pause();
     }
 
-    for (uint32_t i=0; i<SectorSize/sizeof(uint32_t); i++) {
+    for (uint32_t i=0; i<block_size/sizeof(uint32_t); i++) {
         outl(base,ptr[i]);
     }
 
@@ -131,7 +130,7 @@ void Ide::writeSector(uint32_t sector, const void* buffer) {
     //waitForDrive(drive);
 
 }
-*/
+
 
 /*
 

@@ -34,6 +34,8 @@ void show_mouse_state(uint32_t state) {
 
 
 int main(int argc, char** argv) {
+    printf("Debug\n");
+    shutdown();
     show_mouse_state(show_mouse());
 
     left_click_on();
@@ -43,6 +45,8 @@ int main(int argc, char** argv) {
     left_click_off();
 
     show_mouse_state(show_mouse());
+
+    shutdown();
 
     return 0;
 }

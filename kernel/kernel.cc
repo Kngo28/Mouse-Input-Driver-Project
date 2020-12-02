@@ -4,6 +4,9 @@
 #include "ext2.h"
 #include "sys.h"
 #include "threads.h"
+#include "process.h"
+#include "elf.h"
+#include "barrier.h"
 
 const char* initName = "/sbin/init";
 
@@ -12,24 +15,20 @@ namespace gheith {
 }
 
 void kernelMain(void) {
-    auto argv = new const char* [2];
-    argv[0] = "init";
-    argv[1] = nullptr;
+    using namespace gheith;
 
+    Shared<Barrier> bar = Shared<Barrier>::make(2);
 
-    //Testing...
+    thread(Process::kernelProcess, [bar] {
+        auto argv = new const char* [2];
+        argv[0] = "init";
+        argv[1] = nullptr;
+        int rc = SYS::exec(initName,1,argv);
+        Debug::panic("*** rc = %d",rc);
 
-    
+        bar->sync();
+    });
 
-    // create the init process
-    // load /sbin/init
-    // initialize a user stack with argc and argv
-    // switch to user mode and start running at the entry point
-    //        will most likely involve calling switchToUser
-
-    // MISSING();
-    
-    //int rc = SYS::exec(initName,1,argv);
-    //Debug::panic("*** rc = %d",rc);
+    bar->sync();
 
 }

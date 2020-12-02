@@ -33,6 +33,10 @@ public:
     // Read the given block into the given buffer. We assume the
     // buffer is big enough
     void read_block(uint32_t block_number, char* buffer) override;
+    
+    // Write the given block into the given buffer. We assume the
+    // buffer is big enough
+    void write_block(uint32_t block_number, char* buffer) override;
 
     // We lie because I'm too lazy to get the actual drive size
     // This means that we'll get QEMU errors if we try to access

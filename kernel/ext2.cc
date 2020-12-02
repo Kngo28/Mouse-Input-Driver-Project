@@ -157,6 +157,28 @@ void Node::read_block(uint32_t index, char* buffer) {
     ASSERT(cnt == block_size);
 }
 
+void Node::write_block(uint32_t index, char* buffer) {
+    ASSERT(index < data.n_sectors / (block_size / 512));
+
+    auto refs_per_block = block_size / 4;
+
+    uint32_t block_index;
+
+    if (index < 12) {
+        uint32_t* direct = &data.direct0;
+        block_index = direct[index];
+    } else if (index < (12 + refs_per_block)) {
+        ide->read(data.indirect_1 * block_size + (index - 12) * 4,block_index);
+
+    } else {
+        block_index = 0;
+        Debug::panic("index = %d\n",index);
+    }
+
+    auto cnt = ide->write_all(block_index * block_size, block_size,buffer);
+    ASSERT(cnt == block_size);
+}
+
 uint32_t Node::find(const char* name) {
     uint32_t out = 0;
 

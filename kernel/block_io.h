@@ -36,6 +36,9 @@ public:
     // Read a block and put its bytes in the given buffer
     virtual void read_block(uint32_t block_number, char* buffer) = 0;
 
+    // Read the given buffer and put its bytes in the block
+    virtual void write_block(uint32_t block_number, char* buffer) = 0;
+
     // Read up to "n" bytes starting at "offset" and put the restuls in "buffer".
     // returns:
     //   > 0  actual number of bytes read
@@ -51,6 +54,22 @@ public:
     //    -1 error (offset > size_in_bytes)
     //
     virtual int64_t read_all(uint32_t offset, uint32_t n, char* buffer);
+
+    // Read up to "n" bytes from "buffer" and put the results in the file starting at "offset".
+    // returns:
+    //   > 0  actual number of bytes read
+    //   = 0  end (offset == size_in_bytes)
+    //   -1   error (offset > size_in_bytes)
+    virtual int64_t write(uint32_t offset, uint32_t n, char* buffer);
+
+    // Read min(n,size_in_bytes - offset) bytes from "buffer" and
+    //      put the results the file starting at "offset".
+    // returns:
+    //    > 0 actual number of bytes read
+    //    = 0 end (offset == size_in_bytes)
+    //    -1 error (offset > size_in_bytes)
+    //
+    virtual int64_t write_all(uint32_t offset, uint32_t n, char* buffer);
 
     template <typename T>
     void read(uint32_t offset, T& thing) {
