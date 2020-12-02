@@ -10,7 +10,6 @@
 
 // need a Timer class, or try to use jiffies (pit.h/cc)
 // sample class
-/*
 class Timer {
 	int32_t time;
 public:
@@ -27,15 +26,15 @@ public:
 		return time;
 	}
 };
-*/
+
 
 class PS2INTERFACE {
 
-	//Timer timer;
+	Timer timer;
 
 public:
     
-	PS2INTERFACE () {}
+	PS2INTERFACE () : timer{} {}
 
 	// SR = Status Register 
 
@@ -45,16 +44,16 @@ public:
         int status = inb(0x64) & 1;
         
         if (status != 1) {
-			/*
-			timer->start_timer();
+			timer.start_timer();
 
-			while (status != 1 && timer->get_time() < Timer::TIMELIMIT) {
+			while (status != 1 && timer.get_time() < timer.TIMELIMIT) {
 				status = inb(0x64) & 1;
 			}
 
-			if (status != 1) { */
+			if (status != 1) { 
+				Debug::panic("Before Read Failed!\n");
 				return false;
-			//}
+			}
         }
         
         return true;
@@ -66,16 +65,15 @@ public:
         int status = inb(0x64) & 2;
         
         if (status == 2) {
-			/*
-            timer->start_timer();
+            timer.start_timer();
 
-			while (status != 1 && timer->get_time() < Timer::TIMELIMIT) {
+			while (status != 1 && timer.get_time() < timer.TIMELIMIT) {
 				status = inb(0x64) & 2;
 			}
 
-			if (status == 2) {*/
+			if (status == 2) {
 				return false;
-			//}
+			}
         }
         
         return true;
@@ -117,21 +115,21 @@ public:
     // sending bytes to PS/2 device
     void send_bytes(int bytes) {
         // first PS/2 port
-
+		/*
 		bool can_write = before_write();
 
 		if (can_write) {
 			// write to IO port 0x60
 			send_to_controller(0x60, bytes);
 		}
-
+		*/
         
         // second PS/2 port
 
 		send_to_controller(0x64, 0xD4); // 0xD4 is a command
-		can_write = before_write();
+		bool can_write = before_write();
 
-		else if (can_write) {
+		if (can_write) {
 			// write to IO port 0x60
 			send_to_controller(0x60, bytes);
 		}
