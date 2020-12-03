@@ -23,42 +23,42 @@ extern "C" int mouseHandler(uint32_t eax, uint32_t *frame) {
     Packet* p = new Packet();
 
     switch(eax) {
-        case 0: // void middle_click_on(void)
+        case 14: // void middle_click_on(void)
             current_mouse_state->enable_bm();
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
             outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
             break;
 
-        case 1: // void middle_click_off(void)
+        case 15: // void middle_click_off(void)
             current_mouse_state->disable_bm();
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
             outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
             break;
 
-        case 2: // void right_click_on(void)
+        case 16: // void right_click_on(void)
             current_mouse_state->enable_br();
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
             outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
             break;
 
-        case 3: // void right_click_off(void)
+        case 17: // void right_click_off(void)
             current_mouse_state->disable_br();
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
             outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
             break;
 
-        case 4: // void left_click_on(void)
+        case 18: // void left_click_on(void)
             current_mouse_state->disable_br();
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
             outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
             break;
 
-        case 5: // void left_click_off(void)
+        case 19: // void left_click_off(void)
             current_mouse_state->disable_bl();
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
             break;
 
-        case 6: // void move_mouse(int xm, int ym)
+        case 20: // void move_mouse(int xm, int ym)
             {
                 int xm = (int)userEsp[1];
                 int ym = (int)userEsp[2];
@@ -72,7 +72,7 @@ extern "C" int mouseHandler(uint32_t eax, uint32_t *frame) {
             }
             break;
 
-        case 7: // uint32_t show_mouse(void)
+        case 21: // uint32_t show_mouse(void)
             return current_mouse_state->get_packet();
 
         default:
