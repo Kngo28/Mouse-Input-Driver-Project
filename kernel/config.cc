@@ -301,7 +301,7 @@ void configInit(Config* config) {
         }
     }
     //Debug::panic("|||||||||||\n");
-    FADT* fadt = (FADT*) findSDT(rsdp,"FACP");
+    // FADT* fadt = (FADT*) findSDT(rsdp,"FACP");
 
     // SDT* temp = &fadt->h;
     // SDT* MadtTemp = &madt->sdt;
@@ -309,12 +309,12 @@ void configInit(Config* config) {
     // Debug::printf("size: %d\n", temp->Length);
     // Debug::printf("MADT header: %s\n", MadtTemp->Signature);
 
-    Debug::printf("BAF flag: %x\n", fadt->BootArchitectureFlags);
-    Debug::printf("other flag: %x\n", fadt->Reserved2);
-    if(fadt->BootArchitectureFlags == 0) {
+    // Debug::printf("BAF flag: %x\n", fadt->BootArchitectureFlags);
+    // Debug::printf("other flag: %x\n", fadt->Reserved2);
+    // if(fadt->BootArchitectureFlags == 0) {
         //there's no PS2
         // Debug::panic("NO PS2 CONTROLLER!");
-    }
+    // }
 
     config->totalProcs = config->nOtherProcs + 1;
 }

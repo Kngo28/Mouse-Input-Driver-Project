@@ -12,271 +12,251 @@
 #include "heap.h"
 #include "shared.h"
 #include "kernel.h"
+#include "config.h"
+
+using namespace gheith; //use bc took implementations of ext2 and etc...
+
+//Polymorphism from File superclass or whatever... bust virtual and override
+class NodeFile : public File {
+    Shared<Node> node;
+    off_t offset = 0;
+    
+public:
+    NodeFile(Shared<Node> node) : node(node) {}
+    
+    virtual bool isFile() override {
+         return node->is_file(); 
+    }
+    virtual bool isDirectory() override { 
+        return node->is_dir(); 
+    }
+    virtual off_t size() override { 
+        return node->size_in_bytes(); 
+    }
+    virtual off_t seek(off_t off) override { 
+        offset = off; 
+        return off; 
+    }
+    virtual ssize_t read(void* buffer, size_t n) override {
+        ssize_t m = node->read(offset, n, (char*) buffer);
+        if(m > 0) {
+            offset += m;
+        }
+        return m;
+    }
+    virtual ssize_t write(void*, size_t) override {
+        Debug::panic("bad");
+        return -1;
+    }
+    bool isSymLink() { 
+        return node->is_symlink(); 
+    }
+};
+
+
+static uint32_t push(uint32_t sp, const char* str) {
+    int n = K::strlen(str);
+    uint32_t ptr = sp - (n+1);
+    ptr = (ptr / 4) * 4;
+    memcpy((void*) ptr, str, n + 1);
+    return ptr;
+}
+
+static uint32_t push(uint32_t sp, uint32_t args) {
+    uint32_t ptr = sp - 4;
+    *((uint32_t*)ptr) = args;
+    return ptr;
+}
+
+int SYS::exec(const char* path, int argc, const char* argv[]) { 
+    auto file = root_fs->find(root_fs->root, path);
+    if(file == nullptr) { return -1; }
+    if(!file->is_file()) { return -1; }
+
+    current()->process->clear_private();
+    uint32_t sp = 0xefffe000;
+
+    auto ptrs = new uint32_t[argc];
+    for(auto i = 0; i < argc; i++) {
+        sp = push(sp, argv[i]);
+        ptrs[i] = sp;
+    }
+    sp = push(sp, (uint32_t)0);
+    for(auto i = 0; i < argc; i++) {
+        sp = push(sp, ptrs[argc-i-1]);
+    }
+    sp = push(sp,sp);
+    sp = push(sp, argc);
+
+    uint32_t entry = ELF::load(file); //
+    file == nullptr;
+    switchToUser(entry, sp, 0); //
+    return -1;
+}
+
 
 extern "C" int sysHandler(uint32_t eax, uint32_t *frame) {
-    using namespace gheith;
 
     uint32_t *userEsp = (uint32_t*)frame[3];
     uint32_t userPC = frame[0];
-
-    Debug::printf("*** syscall#%d, userEsp = %x, userPC = %x\n",eax,userEsp,userPC);
-
-    auto currentProcess = current()->process;
-    
-    switch(eax) {
-        case 0: // exit
-            {
-                int rc = (int)userEsp[1];
-                currentProcess->exit(rc);
-            }
-            break;
-        case 7: // shutdown
-            Debug::shutdown();
-            break;
-        default:
-            Debug::panic("Not a proper system call\n");
-
-    }
-
-    return -1;
-
-}
-
-/*
-    switch(eax) {
-        case 0: // exit
-            {
-                int rc = (int)userEsp[1];
-                currentProcess->exit(rc);
-            }
-            break;
-        case 1: // write
-            {
-                int fd = (int)userEsp[1];
-                void* buf = (void*)userEsp[2];
-                size_t nbyte = (size_t)userEsp[3];
-                auto file = currentProcess->getFile(fd);
-                if (file != nullptr) {
-                    return file->write(buf, nbyte);
-                } else {
-                    return -1;
-                }
-            }
-            break;
-        case 2: // fork
-            {
-                int id = 1;
-                auto child_process = currentProcess->fork(id);
-
-                thread(child_process, [userPC, userEsp] {
-                    switchToUser(userPC, (uint32_t)userEsp, 0);
-                });
-
-                return id;
-            }
-            break;
-        case 3: // sem
-            {
-                uint32_t initial = (uint32_t)userEsp[1];
-                return currentProcess->newSemaphore(initial);
-            }
-            break;
-        case 4: // up
-            {
-                int id = (int)userEsp[1];
-                auto sem = currentProcess->getSemaphore(id);
-                if (sem != nullptr) {
-                    sem->up();
-                    return 0;
-                } else {
-                    return -1;
-                }
-            }
-            break;
-        case 5: // down
-            {
-                int id = (int)userEsp[1];
-                auto sem = currentProcess->getSemaphore(id);
-                if (sem != nullptr) {
-                    sem->down();
-                    return 0;
-                } else {
-                    return -1;
-                }
-            }
-            break;
-        case 6: // close
-            {
-                int id = (int)userEsp[1];
-                return currentProcess->close(id);
-            }
-            break;
-        case 7: // shutdown
-            Debug::shutdown();
-            break;
-        case 8: // wait
-            {
-                int id = (int)userEsp[1];
-                uint32_t *status = (uint32_t*)userEsp[2];
-                return currentProcess->wait(id, status);
-            }
-            break;
-        case 9: // execl
-            {
-                const char* path = (const char*)userEsp[1];
-                int argc = 0;
-                while (userEsp[2 + argc]) {
-                    argc++;
-                }
-                char** argv = new char*[argc];
-                for (int i = 0; i < argc; i++) {
-                    argv[i] = (char*)userEsp[2 + i];
-                }
-                SYS::exec(path, argc, (const char**)argv);
-            }
-            break;
-        case 10: // open
-            {
-                const char* fn = (const char*)userEsp[1];
-                auto root = root_fs->root;
-                auto fileNode = root_fs->find(root, fn); // Shared<Node>
-                auto openFile = new OpenFile(fileNode);
-                if (openFile->isDirectory()) {
-                    Debug::panic("The path refers to a directory\n");
-                }
-                Shared<File> openFileShared{ openFile };
-                return currentProcess->setFile(openFileShared);
-            }
-            break;
-        case 11: // len
-            {
-                int fd = (int)userEsp[1];
-                auto file = currentProcess->getFile(fd);
-                if (file != nullptr) {
-                    return file->size();
-                } else {
-                    return -1;
-                }
-            }
-            break;
-        case 12: // read
-            {
-                int fd = (int)userEsp[1];
-                void* buf = (void*)userEsp[2];
-                size_t nbyte = (size_t)userEsp[3];
-                auto file = currentProcess->getFile(fd);
-                if (file != nullptr) {
-                    return file->read(buf, nbyte);
-                } else {
-                    return -1;
-                }
-            }
-            break;
-        case 13: // seek
-            {
-                int fd = (int)userEsp[1];
-                off_t offset = (off_t)userEsp[2];
-                auto file = currentProcess->getFile(fd);
-                return file->seek(offset);
-            }
-            break;
-        default:
-            Debug::panic("Not a proper system call\n");
-
-    }
-*/
-
-void SYS::init(void) {
-    IDT::trap(48,(uint32_t)sysHandler_,3);
-}
-
-int SYS::exec(const char* path, int argc, const char* argv[]) {
-    using namespace gheith;
-    
-    auto root = root_fs->root;
-    auto file = root_fs->find(root, path);
-
-    // number of chars in argv in total including '\0'
-    uint32_t num_char = 0;
-    
-    for (int i = 0; i < argc; i++) {
-        num_char += ((uint32_t) K::strlen(argv[i])) + 1;
-    }
-
-    // number of 4B blocks needed for argv
-    int num_blocks = (num_char / 4) + ((num_char % 4 == 0) ? 0 : 1);
-
-    // space to store bytes, argc, and argv
-    // numbers represent: argc, **argv, *argv[0]-*argv[argc-1], num_blocks, argv characters
-    // addresses represents memories in kernel, later need to modify values
-    auto arg_copy = malloc( (1 + 1 + argc + 1 + num_blocks) * sizeof(uint32_t) );
-
-    // argc
-    *((uint32_t*)arg_copy + 0) = argc;
-
-    // **argv
-    *((uint32_t*)arg_copy + 1) = (uint32_t)arg_copy + 8;
-
-    // num_blocks
-    *((uint32_t*)arg_copy + 1 + 1 + argc) = num_blocks;
-
-    // address of argv entries start
-    uint32_t argv_entry = (uint32_t)arg_copy + (1 + 1) * sizeof(uint32_t);
-
-    // address of argv characters start and will iterate over the whole characters
-    uint32_t argv_char = (uint32_t)arg_copy + (1 + 1 + argc + 1) * sizeof(uint32_t);
-
-    for (int i = 0; i < argc; i++) {
-        *((uint32_t*)argv_entry + i) = argv_char;
-        const char* tmp = argv[i];
-        while (*tmp != '\0') {
-            *((char*)argv_char) = *tmp;
-            argv_char++;
-            tmp++;
+    //Debug::printf("*** syscall#%d, userEsp = %x, userPC = %x\n",eax,userEsp,userPC);
+    switch (eax)
+    {
+        case 0: //exit kill current process
+        {
+            auto status = userEsp[1];
+            current()->process->output->set(status);
+            stop(); 
+            return 0; // 0 or -1?
         }
-        *((char*)argv_char) = '\0';
-        argv_char++;
+        case 1: //write
+        {
+            int fd = (int) userEsp[1];
+            if(fd == 0) {
+                return -1;
+            }
+            char* buf = (char*) userEsp[2];
+            uint32_t adr = (uint32_t) buf;
+            //check in shared space and APICS
+            if((adr < 0x80000000) || adr == kConfig.localAPIC || adr == kConfig.ioAPIC) {
+                return -1;
+            }
+            size_t nbyte = (size_t) userEsp[3];
+            auto file = current()->process->getFile(fd);
+            if(file == nullptr) {
+                 return -1;
+            } else {
+                return file->write(buf, nbyte);
+            }
+        }
+        case 2: //fork
+        {
+            auto parent_thr = gheith::current();
+            auto parent_pro = parent_thr->process;
+            int id;
+            auto child_pro = parent_pro->fork(id);
+            if(child_pro != nullptr) {
+                thread(child_pro, [userPC, userEsp] {
+                    switchToUser(userPC, (uint32_t) userEsp, 0);
+                });
+            }
+            return id;
+        }
+        case 3: //sem
+        {
+            auto init = userEsp[1];
+            return current()->process->newSemaphore(init);
+        }
+        case 4: //up
+        {
+            auto id = (int) userEsp[1];
+            auto me = current()->process;
+            auto sem = me->getSemaphore(id);
+            if(sem != nullptr) {
+                sem->up();
+                return 0;
+            }
+            else {
+                return -1;
+            }
+        }
+        case 5: //down
+        {
+            auto id = (int) userEsp[1];
+            auto me = current()->process;
+            auto sem = me->getSemaphore(id);
+            if(sem != nullptr) {
+                sem->down();
+                return 0;
+            }
+            else {
+                return -1;
+            }
+        }
+        case 6: //close
+        {
+            auto id = (int) userEsp[1];
+            auto me = current()->process;
+            return me->close(id);
+        }
+        case 7: //shutdown
+        {
+            Debug::shutdown();
+            //no return
+        }
+        case 8: //wait
+        {
+            auto id = (int) userEsp[1];
+            auto ptr = (uint32_t*) userEsp[2];
+            auto me = current()->process;
+            return me->wait(id,ptr);
+        }
+        case 9: //execl
+        {
+            auto path = (const char*) userEsp[1];
+            auto args = (char**) &userEsp[2];
+            int argc = 0;
+            while(true) {
+                if(args[argc] == 0) break;
+                argc++;
+            }
+            auto copy = new char* [argc+1];
+            for(auto i = 0; i < argc; i++) {
+                auto len = K::strlen(args[i]);
+                copy[i] = (char*) malloc(len+1);
+                memcpy(copy[i], args[i], len+1);
+            }
+            copy[argc] = 0;
+            auto status = SYS::exec(path, argc, (const char**) copy);
+            return status;
+        }
+        case 10: //open
+        {
+            auto path = (const char*) userEsp[1];
+            auto node = root_fs->find(root_fs->root, path);
+            if(node == nullptr) { 
+                return -1; 
+            }
+            Shared<File> file { new NodeFile(node) };
+            auto fd = current()->process->setFile(file);
+            return fd;
+        }
+        case 11: //len
+        {
+            auto fd = (int) userEsp[1];
+            auto file = current()->process->getFile(fd);
+            if(file == nullptr) {
+                return -1; 
+            } else {
+                return file->size();
+            }
+        }
+        case 12: //read
+        {
+            auto fd = (int) userEsp[1];
+            char* buf = (char*) userEsp[2];
+            size_t nbyte = (size_t) userEsp[3];
+            auto file = current()->process->getFile(fd);
+            if(file == nullptr) { 
+                return -1; 
+            }
+            return file->read(buf, nbyte);
+        }
+        case 13: //seek
+        {
+            auto fd = (int) userEsp[1];
+            auto off = (off_t) userEsp[2];
+            auto file = current()->process->getFile(fd);
+            if(file == nullptr) { 
+                return -1; 
+            }
+            return file->seek(off);
+        }
     }
-
-    current()->process->clear_private();
-
-    uint32_t userEIP = ELF::load(file);  // userEIP
-    uint32_t userESP = 0xefffe000; // userESP
-
-    // offset, address of the heap
-    uint32_t offset = (uint32_t)arg_copy;
-
-    // argc from heap
-    uint32_t saved_argc = *((uint32_t*)arg_copy + 0);
-
-    // num_blocks from heap
-    uint32_t saved_num_blocks = *((uint32_t*)arg_copy + 1 + 1 + saved_argc);
-
-    // size of data stored in user stack from heap
-    uint32_t data_size = (1 + 1 + argc + 1 + num_blocks) * sizeof(uint32_t);
-
-    // decrease esp to store data
-    userESP -= data_size;
-
-    // store argc in the user stack
-    *((uint32_t*)userESP + 0) = saved_argc;
-
-    // store **argv in the user stack
-    *((uint32_t*)userESP + 1) = *((uint32_t*)arg_copy + 1) - offset + userESP;
-
-    // store *argv[0]-*argv[argc-1]
-    for (uint32_t i = 0; i < saved_argc; i++) {
-        *((uint32_t*)userESP + 2 + i) = *((uint32_t*)arg_copy + 2 + i) - offset + userESP;
-    }
-
-    // store NULL to indicate the end of argv
-    *((uint32_t*)userESP + 2 + saved_argc) = 0;
-
-    memcpy( (void*)((uint32_t*)userESP + 3 + saved_argc), (void*)((uint32_t*)arg_copy + 3 + saved_argc), saved_num_blocks * sizeof(uint32_t) );
-
-    free(arg_copy);
-
-    switchToUser(userEIP, userESP, 0); // after iret, the next code starts from userEIP, which is start in crt0.S
-
     return -1;
+}
+
+
+void SYS::init(void) { 
+    IDT::trap(48,(uint32_t)sysHandler_,3); 
 }

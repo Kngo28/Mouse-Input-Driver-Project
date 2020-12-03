@@ -1,48 +1,52 @@
 #include "libc.h"
+#include "stdint.h"
 
-void one(int fd) {
-    printf("*** fd = %d\n",fd);
-    printf("*** len = %d\n",len(fd));
+void show_mouse_state(uint32_t state) {
+    uint8_t byte0 = (state >> 0) & 0xFF;
+    uint8_t byte1 = (state >> 8) & 0xFF;
+    uint8_t byte2 = (state >> 16) & 0xFF;
 
-    cp(fd,2);
+    if ( byte0 & 0x04 ) {
+        printf("*** middle button is enabled\n");
+    } else {
+        printf("*** middle button is disabled\n");
+    }
+
+    if ( byte0 & 0x02 ) {
+        printf("*** right button is enabled\n");
+    } else {
+        printf("*** right button is disabled\n");
+    }
+
+    if ( byte0 & 0x01 ) {
+        printf("*** left button is enabled\n");
+    } else {
+        printf("*** left button is disabled\n");
+    }
+
+    int x = byte1 - ((byte0 << 4) & 0x100);
+    int y = byte2 - ((byte0 << 3) & 0x100);
+
+    printf("*** cursor is currently at x: %d, y: %d\n", x, y);
+
+    printf("\n");
 }
 
+
 int main(int argc, char** argv) {
-    printf("*** %d\n",argc);
-    for (int i=0; i<argc; i++) {
-        printf("*** %s\n",argv[i]);
-    }
-    int fd = open("/etc/data.txt",0);
-    one(fd);
+    printf("Debug\n");
+    shutdown();
+    show_mouse_state(show_mouse());
 
-    printf("*** close = %d\n",close(fd));
-
-    one(fd);
-    one(100);
-
-
-    printf("*** open again %d\n",open("/etc/data.txt",0));
-    printf("*** seek %ld\n",seek(3,17));
+    left_click_on();
     
-    int id = fork();
+    show_mouse_state(show_mouse());
 
-    if (id < 0) {
-        printf("fork failed");
-    } else if (id == 0) {
-        /* child */
-        printf("*** in child\n");
-        int rc = execl("/sbin/shell","shell","a","b","c",0);
-        printf("*** execl failed, rc = %d\n",rc);
-    } else {
-        /* parent */
-        uint32_t status = 42;
-        wait(id,&status);
-        printf("*** back from wait %ld\n",status);
+    left_click_off();
 
-        int fd = open("/etc/panic.txt",0);
-        cp(fd,1);
-    }
+    show_mouse_state(show_mouse());
 
     shutdown();
+
     return 0;
 }

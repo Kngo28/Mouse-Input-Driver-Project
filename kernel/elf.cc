@@ -29,7 +29,7 @@ uint32_t ELF::load(Shared<Node> file) {
             bzero(p + filesz, memsz - filesz);
         }
     }
-
+    
     return hdr.entry;
 #endif
 }
