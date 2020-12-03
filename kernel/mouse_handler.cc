@@ -111,3 +111,33 @@ int receive_mouse_input(void) {
     PIC_sendEOI(MOUSE_HANDLER::IRQ);
     return 0;
 }
+
+int detect_ps2_type() {
+    PS2INTERFACE* ps2 = new PS2INTERFACE();
+
+    // step 1: disable scanning on device
+    ps2->send_to_device(0xF5, true);
+
+    // step 2: wait for 0xFA response from device
+    int response = ps2->read_from_device();
+    if (response != 0xFA) {
+        return -1;
+    }
+
+    // step 3: identify command on device
+    ps2->send_to_device(0xF2, true);
+
+    // step 4: wait for 0xFA response from device
+    response = ps2->read_from_device();
+    if (response != 0xFA) {
+        return -1;
+    }
+
+    // step 5: wait for 0x00 (PS/2 mouseID) response from device
+    int mouseID = ps2->read_from_device();
+    if (response != 0xFA) {
+        return -1;
+    }
+
+    return mouseID;
+}
