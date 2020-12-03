@@ -128,7 +128,7 @@ int detect_ps2_type() {
     ps2->send_to_device(0xF2, true);
 
     // step 4: wait for 0xFA response from device
-    int response = ps2->read_from_device();
+    response = ps2->read_from_device();
     if (response != 0xFA) {
         return -1;
     }
@@ -138,4 +138,6 @@ int detect_ps2_type() {
     if (response != 0xFA) {
         return -1;
     }
+
+    return mouseID;
 }
