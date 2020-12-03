@@ -5,24 +5,19 @@
 #include "debug.h"
 #include "heap.h"
 #include "pit.h"
+#include "atomic.h"
 
-// need interrupt and atomic protections
-
-// need a Timer class, or try to use jiffies (pit.h/cc)
-// sample class
 class Timer {
 	int32_t time;
+        ISL lock;
 public:
-	int TIMELIMIT = 2000; // ms
-	Timer () : time{0} {}
-
-	void start_timer() {
-		// start time
-		//time = Pit::jiffies;
-	}
+	int TIMELIMIT = 1000; // 1 second
+	Timer () : time{0}, lock{} {}
 
 	int32_t get_time() {
-		//time = Pit::jiffies;
+		bool disable = lock.lock();
+		time = Pit::jiffies;
+		lock.unlock(disable);
 		return time;
 	}
 };
@@ -36,107 +31,104 @@ public:
     
 	PS2INTERFACE () : timer{} {}
 
-	// SR = Status Register 
+    // SR = Status Register
+    // bit 0 of SR = output buffer
+    // bit 1 of SR = input buffer
 
-	// bit 0 of SR byte must be set before reading
-	bool before_read() {
+    // bit 0 of SR byte must be set before reading
+    bool before_read() {
         // read bit 0 of SR byte
         int status = inb(0x64) & 1;
         
         if (status != 1) {
-			timer.start_timer();
+            int time = 0;
+            
+            // keep polling bit 0 until set or timer runs out 
+            while (status != 1 && timer.get_time() < timer.TIMELIMIT) {
+                status = inb(0x64) & 1;
+                time = timer.get_time();
+            }
 
-			while (status != 1 && timer.get_time() < timer.TIMELIMIT) {
-				status = inb(0x64) & 1;
-			}
-
-			if (status != 1) { 
-				Debug::panic("Before Read Failed!\n");
-				return false;
-			}
+            if (status != 1) { 
+                Debug::panic("Before Read Failed! Time Failed: %d ms\n", time);
+                return false;
+            }
         }
         
         return true;
     }
 
-	// bit 1 of SR byte must be cleared before writing
+    // bit 1 of SR byte must be clear before writing
     bool before_write() {
         // read bit 1 of SR byte
         int status = inb(0x64) & 2;
         
         if (status == 2) {
-            timer.start_timer();
-
-			while (status != 1 && timer.get_time() < timer.TIMELIMIT) {
-				status = inb(0x64) & 2;
-			}
-
-			if (status == 2) {
-				return false;
-			}
+            int time = 0;
+            
+	    // keep polling bit 1 until clear or timer runs out 
+            while (status != 1 && timer.get_time() < timer.TIMELIMIT) {
+                status = inb(0x64) & 2;
+                time = timer.get_time();
+            }
+            
+	    if (status == 2) {
+                Debug::panic("Before Write Failed! Time Failed: %d ms\n", time);
+                return false;
+            }
         }
         
         return true;
     }
 
-	// send command to controller at given port
-    bool send_to_controller(int port, int command) {
-		// check that you can write to controller
+    // send command or bytes to controller at given port
+    bool send_to_controller(int port, int message) {
+        // check that input buffer is empty
         bool can_write = before_write();
-
-		// if yes, send command to controller and
-		// return success
-		if (can_write) {
-			outb(port, command);
-			return true;
-		}
-			
-		// else, timeout occurred before status was
-		// changed; return failure
-		return false;
-    }
-
-	// read 
-    int read_from_port(int port) {
-        bool can_read = before_read();
-
-		if (!can_read) {
-			return inb(port);
-		}
-		
-		return -1;
-    }
-
-    /* 
-        Both send_bytes and receiving bytes depend on whether
-        we are using the first or second PS/2 port.
-    */
-
-    // sending bytes to PS/2 device
-    void send_bytes(int bytes) {
-        // first PS/2 port
-		/*
-		bool can_write = before_write();
-
-		if (can_write) {
-			// write to IO port 0x60
-			send_to_controller(0x60, bytes);
-		}
-		*/
         
-        // second PS/2 port
+	// if yes, send command or bytes to controller
+        if (can_write) {
+            outb(port, message);
+            return true;
+        }
+            
+        // else, timeout occurred before status was changed
+        return false;
+    } 
 
-		send_to_controller(0x64, 0xD4); // 0xD4 is a command
-		bool can_write = before_write();
-
-		if (can_write) {
-			// write to IO port 0x60
-			send_to_controller(0x60, bytes);
-		}
+    // read value from given port
+    int read_from_port(int port) {
+        // check that output buffer is empty
+        bool can_read = before_read();
+        
+	// if yes, read from port
+        if (can_read) {
+            return inb(port);
+        }
+        
+	// else, timeout occurred before status was changed
+        return -1;
     }
-    
+
+        // sending a command or bytes to PS/2 device (first PS/2 port)
+    void send_to_device(int message, bool command) {
+        // check that input buffer is empty
+        bool can_write = before_write();
+        
+	// if yes, write to IO port 0x60
+        if (can_write) {
+            // if sending a command to device, must send 0xD4 command
+            // to controller first
+            if (command) {
+                send_to_controller(0x64, 0xD4);
+            }
+
+            send_to_controller(0x60, message);
+        }
+    }
+
     // receiving bytes from a PS/2 device
-    void receive_bytes() {
+    int read_from_device() {
         // first PS/2 port - keyboard
 	/*
 		1. Enable IRQ1
@@ -153,6 +145,7 @@ public:
 		3. Send EOI to interrupt controller
 		4. Return EOI from interrupt handler
 	*/
+        return -1;
     }
 };
 
