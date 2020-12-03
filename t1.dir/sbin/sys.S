@@ -119,7 +119,7 @@ middle_click_on:
         ret
 
         .global middle_click_off
-middle_click_on:
+middle_click_off:
         mov $15,%eax
         int $48
         ret
