@@ -111,3 +111,52 @@ seek:
 	mov $13,%eax
 	int $48
 	ret
+
+ .global middle_click_on
+middle_click_on:
+        mov $14,%eax
+        int $48
+        ret
+
+        .global middle_click_off
+middle_click_on:
+        mov $15,%eax
+        int $48
+        ret
+
+        .global right_click_on
+right_click_on:
+        mov $16,%eax
+        int $48
+        ret
+
+        .global right_click_off
+right_click_off:
+        mov $17,%eax
+        int $48
+        ret
+
+        .global left_click_on
+left_click_on:
+        mov $18,%eax
+        int $48
+        ret
+
+        .global left_click_off
+left_click_off:
+        mov $19,%eax
+        int $48
+        ret
+
+        .global move_mouse
+move_mouse:
+        mov $20,%eax
+        int $48
+        ret
+
+        .global show_mouse
+show_mouse:
+        mov $21,%eax
+        int $48
+        ret
+
