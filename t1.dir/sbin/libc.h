@@ -2,6 +2,7 @@
 #define _LIBC_H_
 
 #include "sys.h"
+#include "msys.h"
 
 #define MISSING() do { \
     putstr("\n*** missing code at"); \
