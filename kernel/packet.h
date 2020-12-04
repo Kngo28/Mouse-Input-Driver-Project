@@ -3,6 +3,7 @@
 
 #include "stdint.h"
 #include "machine.h"
+#include "debug.h"
 
 #define MOVE_LIMIT 0x100
 
@@ -19,7 +20,7 @@ public:
         byte1 = (uint8_t)((raw_data & 0x0000FF00) >> 8);
         byte2 = (uint8_t)((raw_data & 0x00FF0000) >> 16);
         byte3 = (uint8_t)((raw_data & 0xFF000000) >> 24);
-        if((byte0 & 08) >> 3 == 0) { //test 3rd bit = 0 (Should always be 1)
+        if((byte0 & 0x08) >> 3 == 0) { //test 3rd bit = 0 (Should always be 1)
             Debug::panic("Bad packet... throw it out\n");
         }
         // byte0 = 0x08;
