@@ -160,9 +160,9 @@ extern "C" void kernelInit(void) {
 
     Debug::printf("| %d enabling interrupts, I'm scared\n",id);
     sti();
-    // while(true) {
+    while(true) {
 
-    // }
+    }
 
     auto myOrder = howManyAreHere.add_fetch(1);
     if (myOrder == kConfig.totalProcs) {

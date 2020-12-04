@@ -2,6 +2,7 @@
 #define _PACKET_H_
 
 #include "stdint.h"
+#include "machine.h"
 
 #define MOVE_LIMIT 0x100
 
@@ -12,11 +13,19 @@ class Packet {
     uint8_t byte3; // not going to use it, but maybe for a padding
 
 public:
-    Packet() {
-        byte0 = 0x08;
-        byte1 = 0x00;
-        byte2 = 0x00;
-        byte3 = 0x00;
+    Packet() { //comes in as 32 bit data
+        uint32_t raw_data = (uint32_t) inl(0x60); //read from port 0x60 after interrupt in mouse_handler
+        byte0 = (uint8_t)(raw_data & 0x000000FF);
+        byte1 = (uint8_t)((raw_data & 0x0000FF00) >> 8);
+        byte2 = (uint8_t)((raw_data & 0x00FF0000) >> 16);
+        byte3 = (uint8_t)((raw_data & 0xFF000000) >> 24);
+        if((byte0 & 08) >> 3 == 0) { //test 3rd bit = 0 (Should always be 1)
+            Debug::panic("Bad packet... throw it out\n");
+        }
+        // byte0 = 0x08;
+        // byte1 = 0x00;
+        // byte2 = 0x00;
+        // byte3 = 0x00;
     }
 
     void reset() {
@@ -96,6 +105,10 @@ public:
             enable_ys();
             byte2 = ym + 0x100;
         }
+    }
+
+    void set_byte0(int byte0) {
+
     }
 
     void set_xm(int xm) {

@@ -20,7 +20,7 @@ extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
 
     Debug::printf("*** mouse movement call#%d, userEsp = %x, userPC = %x\n",eax, userEsp, userPC);
 
-    Packet* p = new Packet();
+    Packet* p = new Packet(); //read from 0x60 in packet initialization
 
     switch(eax) {
         case 14: // void middle_click_on(void)
