@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
 
     show_mouse_state(show_mouse());
 
-    shutdown();
+//    shutdown();
 
     return 0;
 }
