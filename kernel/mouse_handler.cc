@@ -20,37 +20,32 @@ extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
 
     Debug::printf("*** mouse movement call#%d, userEsp = %x, userPC = %x\n",eax, userEsp, userPC);
 
-    Packet* p = new Packet(); //read from 0x60 in packet initialization
+    Packet* p = new MovementPacket(); //read from 0x60 in packet initialization
 
     switch(eax) {
         case 14: // void middle_click_on(void)
             current_mouse_state->enable_bm();
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
-            outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
             break;
 
         case 15: // void middle_click_off(void)
             current_mouse_state->disable_bm();
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
-            outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
             break;
 
         case 16: // void right_click_on(void)
             current_mouse_state->enable_br();
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
-            outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
             break;
 
         case 17: // void right_click_off(void)
             current_mouse_state->disable_br();
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
-            outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
             break;
 
         case 18: // void left_click_on(void)
             current_mouse_state->disable_br();
             outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
-            outb(current_mouse_state->get_packet() & 0x0000CF, 0x60);
             break;
 
         case 19: // void left_click_off(void)
