@@ -96,6 +96,21 @@ public:
         return false;
     } 
 
+    // write bytes to a port
+    bool send_to_port(int port, int bytes) {
+        // check that input buffer is empty
+        bool can_write = before_write();
+
+        // if yes, send bytes to port
+        if (can_write) {
+            outb(port, bytes);
+            return true;
+        }
+
+        // else, timeout occurred before status was changed
+        return false;   
+    }
+
     // read value from given port
     int read_from_port(int port) {
         // check that output buffer is empty
@@ -110,7 +125,7 @@ public:
         return -1;
     }
 
-        // sending a command or bytes to PS/2 device (first PS/2 port)
+    // sending a command or bytes to PS/2 device (first PS/2 port)
     void send_to_device(int message, bool command) {
         // check that input buffer is empty
         bool can_write = before_write();
