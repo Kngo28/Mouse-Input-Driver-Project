@@ -4,7 +4,7 @@
 
 // from https://forum.osdev.org/viewtopic.php?t=10247
 
-TimerMouse::timer = new Timer();
+Mouse::timer = new Timer();
 
 inline void Mouse::mouse_wait(uint8_t b) {
     if ( b == 0 ) { // read data
