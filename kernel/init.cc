@@ -126,7 +126,7 @@ extern "C" void kernelInit(void) {
         Pit::calibrate(1000);
 
         // initialize mouse
-        //mouse_init();
+        mouse_init();
 
         SMP::running.fetch_add(1);
 
@@ -168,7 +168,7 @@ extern "C" void kernelInit(void) {
     if (myOrder == kConfig.totalProcs) {
         auto initProc = Shared<Process>::make(true);
         // initialize mouse
-        mouse_init();
+        //mouse_init();
 	thread(initProc, [] {
             kernelMain();
             Debug::shutdown();

@@ -13,7 +13,7 @@ void PIC_sendEOI(unsigned char irq) {
 
 MouseState* current_mouse_state = new MouseState();
 
-extern "C" int mouseHandler(uint32_t eax, uint32_t *frame) {
+extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
 
     uint32_t *userEsp = (uint32_t*)frame[3];
     uint32_t userPC = frame[0];
@@ -73,13 +73,17 @@ extern "C" int mouseHandler(uint32_t eax, uint32_t *frame) {
             break;
 
         case 21: // uint32_t show_mouse(void)
-            return current_mouse_state->get_packet();
+            //return current_mouse_state->get_packet();
+            Debug::printf("");
+	    break;
 
         default:
-            Debug::panic("Not a proper mouse behavior\n");
+            Debug::printf("Not a proper mouse behavior\n");
+	    break;
     }
 
-    return -1;
+    SMP::eoi_reg.exchange(0);
+    //return -1;
 }
 
 void mouse_init() {
