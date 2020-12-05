@@ -4,26 +4,26 @@
 
 // from https://forum.osdev.org/viewtopic.php?t=10247
 
-Mouse::timer = new Timer();
+Timer* Mouse::timer = new Timer();
 
 inline void Mouse::mouse_wait(uint8_t b) {
     if ( b == 0 ) { // read data
-        while ( timer.get_time() < timer.TIMELIMIT ) {
+        while ( timer->get_time() < timer->TIMELIMIT ) {
             if ( (inb(0x64) & 1) == 1 ) {
                 return;
             }
         }
 
-        Debug::panic("Data Read Failed! Time Failed: %d ms\n", timer.get_time());
+        Debug::panic("Data Read Failed! Time Failed: %d ms\n", timer->get_time());
 
     } else { // send command
-        while ( timer.get_time() < timer.TIMELIMIT ) {
+        while ( timer->get_time() < timer->TIMELIMIT ) {
             if ( (inb(0x64) & 2) == 0 ) {
                 return;
             }
         }
 
-        Debug::panic("Before Write Failed! Time Failed: %d ms\n", timer.get_time());
+        Debug::panic("Before Write Failed! Time Failed: %d ms\n", timer->get_time());
 
     }
 

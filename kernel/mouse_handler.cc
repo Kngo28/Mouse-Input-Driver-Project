@@ -2,7 +2,8 @@
 #include "machine.h"
 #include "idt.h"
 #include "debug.h"
-#include "ps2_interface.h"
+//#include "ps2_interface.h"
+#include "mouse.h"
 
 // borrowed from osdev
 void PIC_sendEOI(unsigned char irq) {
@@ -11,7 +12,7 @@ void PIC_sendEOI(unsigned char irq) {
 	outb(0x20,0x20);
 }
 
-MouseState* current_mouse_state = new MouseState();
+//MouseState* current_mouse_state = new MouseState();
 
 extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
 
@@ -21,40 +22,41 @@ extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
     Debug::printf("*** mouse movement call#%d, userEsp = %x, userPC = %x\n",eax, userEsp, userPC);
 
     Packet* p = new MovementPacket(); //read from 0x60 in packet initialization
+    Debug::printf("p: %d\n", p);
 
     switch(eax) {
         case 14: // void middle_click_on(void)
-            current_mouse_state->enable_bm();
-            outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
+            //current_mouse_state->enable_bm();
+            //outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
             break;
 
         case 15: // void middle_click_off(void)
-            current_mouse_state->disable_bm();
-            outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
+            //current_mouse_state->disable_bm();
+            //outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
             break;
 
         case 16: // void right_click_on(void)
-            current_mouse_state->enable_br();
-            outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
+            //current_mouse_state->enable_br();
+            //outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
             break;
 
         case 17: // void right_click_off(void)
-            current_mouse_state->disable_br();
-            outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
+            //current_mouse_state->disable_br();
+            //outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
             break;
 
         case 18: // void left_click_on(void)
-            current_mouse_state->disable_br();
-            outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
+            //current_mouse_state->disable_br();
+            //outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
             break;
 
         case 19: // void left_click_off(void)
-            current_mouse_state->disable_bl();
-            outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
+            //current_mouse_state->disable_bl();
+            //outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
             break;
 
         case 20: // void move_mouse(int xm, int ym)
-            {
+            /*{
                 int xm = (int)userEsp[1];
                 int ym = (int)userEsp[2];
 
@@ -64,7 +66,7 @@ extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
                 current_mouse_state->add_x(xm);
                 current_mouse_state->add_y(ym);
                 outb(0x60, (current_mouse_state->get_packet() & 0x0000CF) | (p->get_packet() & ~0x0000CF) );
-            }
+            }*/
             break;
 
         case 21: // uint32_t show_mouse(void)
@@ -111,7 +113,7 @@ int receive_mouse_input(void) {
     return 0;
 }
 
-int detect_ps2_type() {
+/*int detect_ps2_type() {
     PS2INTERFACE* ps2 = new PS2INTERFACE();
 
     // step 1: disable scanning on device
@@ -139,4 +141,4 @@ int detect_ps2_type() {
     }
 
     return mouseID;
-}
+}*/

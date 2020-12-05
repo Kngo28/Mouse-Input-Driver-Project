@@ -17,7 +17,8 @@
 #include "tss.h"
 #include "sys.h"
 #include "process.h"
-#include "mouse_handler.h"
+//#include "mouse_handler.h"
+#include "mouse.h"
 
 struct Stack {
     static constexpr int BYTES = 4096;
@@ -126,7 +127,8 @@ extern "C" void kernelInit(void) {
         Pit::calibrate(1000);
 
         // initialize mouse
-        mouse_init();
+        //mouse_init();
+        Mouse::init();
 
         SMP::running.fetch_add(1);
 

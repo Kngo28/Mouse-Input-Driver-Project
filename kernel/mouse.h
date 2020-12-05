@@ -31,8 +31,8 @@ class MouseState {
 
 
 class Mouse {
-    static Timer timer;
 public:
+    static Timer* timer;
     static const uint32_t IRQ = 12;
     static const uint32_t VECTOR = 60;
     static const bool Debug = false;
