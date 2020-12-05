@@ -14,7 +14,7 @@ void PIC_sendEOI(unsigned char irq) {
 
 //MouseState* current_mouse_state = new MouseState();
 
-extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
+/*extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
 
     uint32_t *userEsp = (uint32_t*)frame[3];
     uint32_t userPC = frame[0];
@@ -56,7 +56,7 @@ extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
             break;
 
         case 20: // void move_mouse(int xm, int ym)
-            /*{
+            {
                 int xm = (int)userEsp[1];
                 int ym = (int)userEsp[2];
 
@@ -66,7 +66,7 @@ extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
                 current_mouse_state->add_x(xm);
                 current_mouse_state->add_y(ym);
                 outb(0x60, (current_mouse_state->get_packet() & 0x0000CF) | (p->get_packet() & ~0x0000CF) );
-            }*/
+            }
             break;
 
         case 21: // uint32_t show_mouse(void)
@@ -81,7 +81,7 @@ extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
 
     SMP::eoi_reg.exchange(0);
     //return -1;
-}
+}*/
 
 void mouse_init() {
     Debug::printf("touched\n");

@@ -1,10 +1,82 @@
 #include "mouse.h"
 #include "stdint.h"
 #include "idt.h"
+#include "packet.h"
 
 // from https://forum.osdev.org/viewtopic.php?t=10247
 
 Timer* Mouse::timer = new Timer();
+
+
+extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
+
+    uint32_t *userEsp = (uint32_t*)frame[3];
+    uint32_t userPC = frame[0];
+
+    Debug::printf("*** mouse movement call#%d, userEsp = %x, userPC = %x\n",eax, userEsp, userPC);
+
+    Packet* p = new MovementPacket(); //read from 0x60 in packet initialization
+    Debug::printf("p: %d\n", p);
+
+    switch(eax) {
+        case 14: // void middle_click_on(void)
+            //current_mouse_state->enable_bm();
+            //outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
+            break;
+
+        case 15: // void middle_click_off(void)
+            //current_mouse_state->disable_bm();
+            //outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
+            break;
+
+        case 16: // void right_click_on(void)
+            //current_mouse_state->enable_br();
+            //outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
+            break;
+
+        case 17: // void right_click_off(void)
+            //current_mouse_state->disable_br();
+            //outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
+            break;
+
+        case 18: // void left_click_on(void)
+            //current_mouse_state->disable_br();
+            //outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
+            break;
+
+        case 19: // void left_click_off(void)
+            //current_mouse_state->disable_bl();
+            //outb(0x60, current_mouse_state->get_packet() & 0x0000CF);
+            break;
+
+        case 20: // void move_mouse(int xm, int ym)
+            /*{
+                int xm = (int)userEsp[1];
+                int ym = (int)userEsp[2];
+
+                p->set_xm(xm);
+                p->set_ym(ym);
+
+                current_mouse_state->add_x(xm);
+                current_mouse_state->add_y(ym);
+                outb(0x60, (current_mouse_state->get_packet() & 0x0000CF) | (p->get_packet() & ~0x0000CF) );
+            }*/
+            break;
+
+        case 21: // uint32_t show_mouse(void)
+            //return current_mouse_state->get_packet();
+            Debug::printf("");
+	    break;
+
+        default:
+            Debug::printf("Not a proper mouse behavior\n");
+	    break;
+    }
+
+    SMP::eoi_reg.exchange(0);
+    //return -1;
+}
+
 
 inline void Mouse::mouse_wait(uint8_t b) {
     if ( b == 0 ) { // read data
