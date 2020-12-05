@@ -25,11 +25,6 @@ public:
 };
 
 
-class MouseState {
-
-};
-
-
 class Mouse {
 public:
     static Timer* timer;

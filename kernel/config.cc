@@ -1,8 +1,7 @@
 #include "stdint.h"
 #include "debug.h"
 #include "config.h"
-#include "mouse_handler.h"
-#include "ps2_interface.h"
+#include "mouse.h"
 
 struct MemInfo {
     uint16_t ax;
@@ -282,13 +281,13 @@ void configInit(Config* config) {
             IOAPIC_ENTRY *apic = (IOAPIC_ENTRY*) entryPtr;
 
             // get redirection entry
-            uint32_t red_entry = 0x10 + 2*MOUSE_HANDLER::IRQ;
+            uint32_t red_entry = 0x10 + 2*Mouse::IRQ;
             uint64_t reg = cpuReadIoApic((uint32_t*)apic->address, red_entry + 1);
             reg = (reg << 32) | cpuReadIoApic((uint32_t*)apic->address, red_entry);
             RedirectionEntry* RED = (RedirectionEntry*) &reg;
 
             // change redirection entry
-            RED->vector = MOUSE_HANDLER::VECTOR;  // interrupt vector
+            RED->vector = Mouse::VECTOR;  // interrupt vector
             RED->destination = 1;                 // localAPIC id
             RED->mask = 0;                        // enable this IRQ
 
