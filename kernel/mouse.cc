@@ -15,9 +15,10 @@ extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
 
     Debug::printf("*** mouse movement call#%d, userEsp = %x, userPC = %x\n",eax, userEsp, userPC);
 
-    Packet* p = new MovementPacket(); //read from 0x60 in packet initialization
-    Debug::printf("p: %d\n", p);
+    MovementPacket* p = new MovementPacket(); //read from 0x60 in packet initialization
+    Debug::printf("packet: 0x%x\n", p);
 
+    if(p->is_valid()) {
     switch(eax) {
         case 14: // void middle_click_on(void)
             //current_mouse_state->enable_bm();
@@ -71,6 +72,7 @@ extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
         default:
             Debug::printf("Not a proper mouse behavior\n");
 	    break;
+    }
     }
 
     SMP::eoi_reg.exchange(0);

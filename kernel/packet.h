@@ -55,8 +55,12 @@ class MovementPacket : public Packet {
 public:
     MovementPacket() : Packet() {
         if ( (byte0 & 0x08) == 0 ) { //test 3rd bit = 0 (Should always be 1)
-            Debug::panic("Bad movement packet... throw it out\n");
+            //Debug::panic("Bad movement packet... throw it out\n");
         }
+    }
+
+    uint8_t is_valid() {
+        return (byte0 & 0x08) == 1;
     }
 
     inline int get_ym() {
