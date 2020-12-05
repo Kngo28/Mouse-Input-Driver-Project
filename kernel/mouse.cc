@@ -10,15 +10,18 @@ Timer* Mouse::timer = new Timer();
 
 extern "C" void mouseHandler(uint32_t eax, uint32_t *frame) {
 
-    uint32_t *userEsp = (uint32_t*)frame[3];
-    uint32_t userPC = frame[0];
+    //uint32_t *userEsp = (uint32_t*)frame[3];
+    //uint32_t userPC = frame[0];
 
-    Debug::printf("*** mouse movement call#%d, userEsp = %x, userPC = %x\n",eax, userEsp, userPC);
+    //Debug::printf("*** mouse movement call#%d, userEsp = %x, userPC = %x\n",eax, userEsp, userPC);
 
     MovementPacket* p = new MovementPacket(); //read from 0x60 in packet initialization
-    Debug::printf("packet: 0x%x\n", p);
+    //Debug::printf("packet: 0x%x\n", p->get_packet());
+
+
 
     if(p->is_valid()) {
+        Debug::printf("x: %d   y: %d      middle: %d   right: %d   left: %d\n", p->get_xm(), p->get_ym(), p->get_middle_on(), p->get_right_on(), p->get_left_on());
     switch(eax) {
         case 14: // void middle_click_on(void)
             //current_mouse_state->enable_bm();

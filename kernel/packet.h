@@ -54,17 +54,30 @@ class MovementPacket : public Packet {
     // byte2 represents ym
 public:
     MovementPacket() : Packet() {
-        if ( (byte0 & 0x08) == 0 ) { //test 3rd bit = 0 (Should always be 1)
+        //if ( (byte0 & 0x08) == 0 ) { //test 3rd bit = 0 (Should always be 1)
+        if(!is_valid()) {
             //Debug::panic("Bad movement packet... throw it out\n");
         }
     }
 
     uint8_t is_valid() {
-        return (byte0 & 0x08) == 1;
+        return (byte0 & 0x08) != 0;
+    }
+
+    int get_middle_on() {
+        return (byte0 >> 2) & 0x1;
+    }
+
+    int get_right_on() {
+        return (byte0 >> 1) & 0x1;
+    }
+
+    int get_left_on() {
+        return byte0 & 0x1;
     }
 
     inline int get_ym() {
-        return (int)byte2 - ((byte0 << 4) & 0x100);
+        return (int)byte2 - ((byte0 << 3) & 0x100);
     }
 
     inline int get_xm() {
